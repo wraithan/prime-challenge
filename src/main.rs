@@ -6,33 +6,33 @@ extern crate rand;
 
 fn main() {
     let sieve = primal::Sieve::new(10_000_000);
-    for number in sieve.primes_from(0).take_while(|x| *x < 50) {
-        println!("got num {}", number)
+    for number in 8..10_000_000 {
+        find_quad(&sieve, number).unwrap();
+        if number % 1_000 == 0 {
+            println!("Progress {}", number);
+        }
+
+        // let quad = find_quad(&sieve, number).unwrap();
+        // println!("number: {}, answer: {:?}", number, quad);
     }
 }
 
 
-fn find_quad(target: u64) -> Option<(u64, u64, u64, u64)> {
+fn find_quad(sieve: &primal::Sieve, target: usize) -> Option<(usize, usize, usize, usize)> {
     if target < 8 {
         return None;
     }
 
-    let mut primes: Vec<u64> = vec![];
-    let sieve = primal::Sieve::new(10_000_000);
-    for number in sieve.primes_from(0).take_while(|x| *x < target as usize) {
-        primes.push(number as u64);
-    }
-
-    for a in primes.iter() {
-        for b in primes.iter() {
-            for c in primes.iter() {
-                let total = *a + *b + *c;
+    for a in sieve.primes_from(0) {
+        for b in sieve.primes_from(0) {
+            for c in sieve.primes_from(0) {
+                let total = a + b + c;
                 if total > target {
                     break;
                 }
                 let d = target - total;
-                if sieve.is_prime(d as usize) {
-                    return Some((*a, *b, *c, d));
+                if sieve.is_prime(d) {
+                    return Some((a, b, c, d));
                 }
             }
         }
@@ -40,38 +40,46 @@ fn find_quad(target: u64) -> Option<(u64, u64, u64, u64)> {
     None
 }
 
+#[cfg(test)]
 use rand::distributions::{IndependentSample, Range};
 
 #[test]
 fn find_quad_4() {
-    assert!(find_quad(4).is_none())
+    assert!(test_number(4).is_none());
 }
 
 #[test]
 fn find_quad_8() {
-    assert_eq!(find_quad(8).unwrap(), (2, 2, 2, 2))
+    assert_eq!(test_number(8).unwrap(), (2, 2, 2, 2));
 }
 
 #[test]
 fn find_quad_37() {
-    assert_eq!(find_quad(37).unwrap(), (2, 2, 2, 31))
+    assert_eq!(test_number(37).unwrap(), (2, 2, 2, 31));
 }
 
 #[test]
 fn find_quad_random() {
-    let between = Range::new(8u64, 10_000_000);
+    let between = Range::new(8usize, 10_000_000);
     let mut rng = rand::thread_rng();
     for _ in 0..100 {
         let input = between.ind_sample(&mut rng);
-        test_number(input)
+        test_number(input);
     }
 }
 
 #[cfg(test)]
-fn test_number(input: u64) {
+fn test_number(input: usize) -> Option<(usize, usize, usize, usize)> {
+    let sieve = primal::Sieve::new(10_000_000);
     println!("attempting {}", input);
-    let answer = find_quad(input).unwrap();
+    let answer = find_quad(&sieve, input);
     println!("got {:?}", answer);
-    let total = answer.0 + answer.1 + answer.2 + answer.3;
-    assert_eq!(total, input)
+    if input >= 8 {
+        let quad = answer.unwrap();
+        let total = quad.0 + quad.1 + quad.2 + quad.3;
+        assert_eq!(total, input);
+    } else {
+        assert!(answer.is_none());
+    }
+    return answer
 }
