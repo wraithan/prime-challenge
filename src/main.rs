@@ -1,19 +1,15 @@
 extern crate primal;
 
-#[cfg(test)]
-extern crate rand;
 
 
 fn main() {
-    let sieve = primal::Sieve::new(10_000_000);
-    for number in 8..10_000_000 {
+    let limit = 100_000_000;
+    let sieve = primal::Sieve::new(limit);
+    for number in 8..limit {
         find_quad(&sieve, number).unwrap();
-        if number % 1_000 == 0 {
-            println!("Progress {}", number);
-        }
-
-        // let quad = find_quad(&sieve, number).unwrap();
-        // println!("number: {}, answer: {:?}", number, quad);
+        // if number % 100_000 == 0 {
+        //     println!("Progress {}", number);
+        // }
     }
 }
 
@@ -23,22 +19,33 @@ fn find_quad(sieve: &primal::Sieve, target: usize) -> Option<(usize, usize, usiz
         return None;
     }
 
-    for a in sieve.primes_from(0) {
-        for b in sieve.primes_from(0) {
-            for c in sieve.primes_from(0) {
-                let total = a + b + c;
-                if total > target {
-                    break;
-                }
-                let d = target - total;
-                if sieve.is_prime(d) {
-                    return Some((a, b, c, d));
-                }
+    for c in sieve.primes_from(0) {
+        {
+            let total = 4 + c;
+            if total > target {
+                break;
+            }
+            let d = target - total;
+            if sieve.is_prime(d) {
+                return Some((2, 2, c, d));
+            }
+        }
+        {
+            let total = 5 + c;
+            if total > target {
+                break;
+            }
+            let d = target - total;
+            if sieve.is_prime(d) {
+                return Some((2, 3, c, d));
             }
         }
     }
     None
 }
+
+#[cfg(test)]
+extern crate rand;
 
 #[cfg(test)]
 use rand::distributions::{IndependentSample, Range};
