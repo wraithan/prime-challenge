@@ -1,16 +1,26 @@
 extern crate primal;
+extern crate time;
 
-
+use std::env;
+use time::Duration;
 
 fn main() {
-    let limit = 100_000_000;
-    let sieve = primal::Sieve::new(limit);
-    for number in 8..limit {
-        find_quad(&sieve, number).unwrap();
-        // if number % 100_000 == 0 {
-        //     println!("Progress {}", number);
-        // }
-    }
+    let mut args = env::args();
+    let limit = args.nth(1)
+        .and_then(|arg| arg.parse::<f64>().ok().map(|x| x as usize))
+        .unwrap_or(10_000_000);
+
+    let time = Duration::span(|| {
+        let sieve = primal::Sieve::new(limit);
+        for number in 8..(limit + 1) {
+            find_quad(&sieve, number).unwrap();
+        }
+    });
+
+    let ns = time.num_nanoseconds().unwrap();
+    let (s, ns) = (ns / 1_000_000_000, ns % 1_000_000_000);
+    let formatted_time = format!("{}.{:06}", s, ns / 1000);
+    println!("Computed the solutions for 8..{} in {}s", limit, formatted_time);
 }
 
 
