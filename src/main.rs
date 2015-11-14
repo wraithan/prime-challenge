@@ -29,26 +29,20 @@ fn find_quad(sieve: &primal::Sieve, target: usize) -> Option<(usize, usize, usiz
         return None;
     }
 
+    let b;
+    let cd_total;
+    if target % 2 == 0 {
+        b = 2;
+        cd_total = target - 4;
+    } else {
+        b = 3;
+        cd_total = target - 5;
+    }
+
     for c in sieve.primes_from(0) {
-        {
-            let total = 4 + c;
-            if total > target {
-                break;
-            }
-            let d = target - total;
-            if sieve.is_prime(d) {
-                return Some((2, 2, c, d));
-            }
-        }
-        {
-            let total = 5 + c;
-            if total > target {
-                break;
-            }
-            let d = target - total;
-            if sieve.is_prime(d) {
-                return Some((2, 3, c, d));
-            }
+        let d = cd_total - c;
+        if sieve.is_prime(d) {
+            return Some((2, b, c, d));
         }
     }
     None
@@ -72,7 +66,7 @@ fn find_quad_8() {
 
 #[test]
 fn find_quad_37() {
-    assert_eq!(test_number(37).unwrap(), (2, 2, 2, 31));
+    test_number(37).unwrap();
 }
 
 #[test]
