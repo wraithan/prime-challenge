@@ -1,8 +1,10 @@
 extern crate primal;
 extern crate time;
+extern crate scoped_threadpool;
 
 use std::env;
 use time::Duration;
+use scoped_threadpool::Pool;
 
 fn main() {
     let mut args = env::args();
@@ -10,17 +12,31 @@ fn main() {
         .and_then(|arg| arg.parse::<f64>().ok().map(|x| x as usize))
         .unwrap_or(10_000_000);
 
+    let threads = 8;
+    let chunks = threads*2;
+    let chunk_size = limit/chunks;
+
+    let mut pool = Pool::new(threads as u32);
     let time = Duration::span(|| {
-        let sieve = primal::Sieve::new(limit);
-        for number in 8..(limit + 1) {
-            find_quad(&sieve, number).unwrap();
-        }
+        pool.scoped(|scope| {
+            for i in 0..chunks {
+                let sieve = primal::Sieve::new(limit);
+                scope.execute(move || {
+                    for number in (i*chunk_size)..(i+1)*chunk_size {
+                        let answer = find_quad(&sieve, number);
+                        if number >= 8 {
+                            answer.unwrap();
+                        }
+                    }
+                })
+            }
+        })
     });
 
     let ns = time.num_nanoseconds().unwrap();
     let (s, ns) = (ns / 1_000_000_000, ns % 1_000_000_000);
     let formatted_time = format!("{}.{:06}", s, ns / 1000);
-    println!("Computed the solutions for 8..{} in {}s", limit, formatted_time);
+    println!("Computed the solutions for 0..{} in {}s", limit, formatted_time);
 }
 
 
